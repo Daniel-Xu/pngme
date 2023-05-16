@@ -1,84 +1,62 @@
-use anyhow::{anyhow, bail};
+use anyhow::bail;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
 #[derive(PartialEq, Debug)]
 struct ChunkType {
-    critical: u8,
-    private: u8,
-    reserved: u8,
-    copyable: u8,
+    bytes: [u8; 4],
 }
 
 impl ChunkType {
     fn bytes(&self) -> [u8; 4] {
-        [self.critical, self.private, self.reserved, self.copyable]
+        self.bytes
     }
 
     fn is_valid(&self) -> bool {
-        self.critical.is_ascii_alphabetic()
-            && self.copyable.is_ascii_alphabetic()
-            && self.private.is_ascii_alphabetic()
-            && self.reserved.is_ascii_alphabetic()
-            && self.is_reserved_bit_valid()
+        self.bytes.iter().all(u8::is_ascii_alphabetic) && self.is_reserved_bit_valid()
     }
 
     fn is_critical(&self) -> bool {
-        self.critical & 0x20 == 0
+        self.bytes[0] & 0x20 == 0
     }
 
     fn is_public(&self) -> bool {
-        self.private & 0x20 == 0
+        self.bytes[1] & 0x20 == 0
     }
 
     fn is_reserved_bit_valid(&self) -> bool {
-        self.reserved & 0x20 == 0
+        self.bytes[2] & 0x20 == 0
     }
 
     fn is_safe_to_copy(&self) -> bool {
-        self.copyable & 0x20 == 0x20
+        self.bytes[3] & 0x20 == 0x20
     }
 }
 
 impl TryFrom<[u8; 4]> for ChunkType {
     type Error = anyhow::Error;
 
-    fn try_from(value: [u8; 4]) -> Result<Self, Self::Error> {
-        let valid = value[0].is_ascii_alphabetic()
-            && value[1].is_ascii_alphabetic()
-            && value[2].is_ascii_alphabetic()
-            && value[3].is_ascii_alphabetic();
+    fn try_from(bytes: [u8; 4]) -> Result<Self, Self::Error> {
+        let valid = bytes.iter().all(u8::is_ascii_alphabetic);
 
         if !valid {
-            bail!("invalid chunk type {:?}", value);
+            bail!("invalid chunk type {:?}", bytes);
         }
 
-        let ct = Self {
-            critical: value[0],
-            private: value[1],
-            reserved: value[2],
-            copyable: value[3],
-        };
-        Ok(ct)
+        Ok(Self { bytes })
     }
 }
 
 impl Display for ChunkType {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", String::from_utf8(self.bytes().to_vec()).unwrap())
+        write!(f, "{}", String::from_utf8_lossy(&self.bytes()))
     }
 }
 
 impl FromStr for ChunkType {
     type Err = anyhow::Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.len() != 4 {
-            return Err(anyhow!("Invalid type {}", s));
-        }
-
-        let mut b = [0; 4];
-        b.copy_from_slice(s.as_bytes());
-        Ok(Self::try_from(b)?)
+        <[u8; 4]>::try_from(s.as_bytes())?.try_into()
     }
 }
 
