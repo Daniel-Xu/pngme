@@ -3,12 +3,12 @@ use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
 #[derive(PartialEq, Debug)]
-struct ChunkType {
+pub struct ChunkType {
     bytes: [u8; 4],
 }
 
 impl ChunkType {
-    fn bytes(&self) -> [u8; 4] {
+    pub fn bytes(&self) -> [u8; 4] {
         self.bytes
     }
 
