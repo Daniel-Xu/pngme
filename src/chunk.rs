@@ -8,7 +8,7 @@ use std::io::{BufRead, BufReader, Read};
 // chuck_type 4
 // data => length
 // crc32 for crc(chunk_type + data) -> 4 bytes
-struct Chunk {
+pub struct Chunk {
     length: u32,
     chunk_type: ChunkType,
     data: Vec<u8>,
@@ -29,7 +29,8 @@ impl Chunk {
         return CASTAGNOLI.checksum(&bytes);
     }
 
-    fn new(chunk_type: ChunkType, data: Vec<u8>) -> Self {
+    // data here is the real content
+    pub fn new(chunk_type: ChunkType, data: Vec<u8>) -> Self {
         let crc = Self::generate_crc(&chunk_type, &data);
 
         Self {
@@ -39,22 +40,22 @@ impl Chunk {
             crc,
         }
     }
-    fn length(&self) -> u32 {
+    pub fn length(&self) -> u32 {
         self.length
     }
-    fn chunk_type(&self) -> &ChunkType {
+    pub fn chunk_type(&self) -> &ChunkType {
         &self.chunk_type
     }
 
-    fn data(&self) -> &[u8] {
+    pub fn data(&self) -> &[u8] {
         &self.data
     }
 
-    fn crc(&self) -> u32 {
+    pub fn crc(&self) -> u32 {
         self.crc
     }
 
-    fn data_as_string(&self) -> anyhow::Result<String> {
+    pub fn data_as_string(&self) -> anyhow::Result<String> {
         // why do we need to use ? here
         // because if the from_utf8 returns error, we need to use the `?`'s From::from to convert
         // the error to anyhow error
@@ -64,7 +65,7 @@ impl Chunk {
     }
 
     #[allow(dead_code)]
-    fn as_bytes(&self) -> Vec<u8> {
+    pub fn as_bytes(&self) -> Vec<u8> {
         self.length()
             .to_be_bytes()
             .iter()
