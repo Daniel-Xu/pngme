@@ -40,6 +40,15 @@ impl Chunk {
             crc,
         }
     }
+
+    pub fn build(length: u32, chunk_type: ChunkType, data: Vec<u8>, crc: u32) -> Self {
+        Self {
+            length,
+            chunk_type,
+            data,
+            crc,
+        }
+    }
     pub fn length(&self) -> u32 {
         self.length
     }
@@ -75,6 +84,27 @@ impl Chunk {
             .copied()
             .collect()
     }
+
+    pub fn read_chunk(reader: &mut BufReader<&[u8]>) -> anyhow::Result<Self> {
+        let mut buf = [0u8; 4];
+        reader.read_exact(&mut buf)?;
+        let len = u32::from_be_bytes(buf);
+
+        reader.read_exact(&mut buf)?;
+        let chunk_type = ChunkType::try_from(buf)?;
+
+        let mut data_buf = vec![0; len as usize];
+        reader.read_exact(&mut data_buf)?;
+
+        reader.read_exact(&mut buf)?;
+
+        let read_crc = u32::from_be_bytes(buf);
+        if Self::generate_crc(&chunk_type, &data_buf) != read_crc {
+            bail!("invalid crc32");
+        }
+
+        Ok(Self::build(len, chunk_type, data_buf, read_crc))
+    }
 }
 
 impl Display for Chunk {
@@ -96,37 +126,13 @@ impl TryFrom<&[u8]> for Chunk {
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
         let mut reader = BufReader::new(value);
 
-        let mut buf = [0u8; 4];
-        reader.read_exact(&mut buf)?;
-        let length = u32::from_be_bytes(buf);
-
-        // handle length
-        reader.read_exact(&mut buf)?;
-        let chunk_type = ChunkType::try_from(buf)?;
-
-        // handle content data
-        let mut data = vec![0; length as usize];
-        reader.read_exact(&mut data)?;
-
-        // handle crc32
-        reader.read_exact(&mut buf)?;
-        let crc = u32::from_be_bytes(buf);
-
-        // compare crc32
-        if crc != Self::generate_crc(&chunk_type, &data) {
-            bail!("invalid checksum");
-        }
+        let chunk = Self::read_chunk(&mut reader)?;
 
         if !reader.fill_buf()?.is_empty() {
             bail!("Invalid content, there's still data left");
         }
 
-        Ok(Self {
-            length,
-            chunk_type,
-            data,
-            crc,
-        })
+        Ok(chunk)
     }
 
     // ❌ initial implementation

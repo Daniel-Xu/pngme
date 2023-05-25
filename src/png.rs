@@ -1,6 +1,6 @@
 use crate::chunk::Chunk;
 use crate::chunk_type::ChunkType;
-use anyhow::bail;
+use anyhow::{anyhow, bail};
 use std::fmt::{Display, Formatter};
 use std::io::{BufRead, BufReader, Read};
 use std::str::FromStr;
@@ -23,15 +23,11 @@ impl Png {
         self.chunks.push(chunk)
     }
     fn remove_chunk(&mut self, chunk_type: &str) -> anyhow::Result<Chunk> {
-        // find this type and remove it from chunk
-        // bail!("not implemented");
-        for (i, chunk) in self.chunks().iter().enumerate() {
-            if *chunk.chunk_type() == ChunkType::from_str(chunk_type)? {
-                return Ok(self.chunks.remove(i));
-            }
-        }
-
-        bail!("no such chunk of this type {}", chunk_type);
+        self.chunks()
+            .iter()
+            .position(|chunk| chunk.chunk_type().to_string() == chunk_type)
+            .map(|index| self.chunks.remove(index))
+            .ok_or_else(|| anyhow!("no such chunk of this type {}", chunk_type))
     }
     fn header(&self) -> &[u8; 8] {
         &self.header
@@ -40,23 +36,13 @@ impl Png {
         &self.chunks
     }
     fn chunk_by_type(&self, chunk_type: &str) -> Option<&Chunk> {
-        for chunk in self.chunks() {
-            if *chunk.chunk_type() == ChunkType::from_str(chunk_type).unwrap() {
-                return Some(chunk);
-            }
-        }
-
-        None
+        self.chunks()
+            .iter()
+            .find(|chunk| chunk.chunk_type().to_string() == chunk_type)
     }
     fn as_bytes(&self) -> Vec<u8> {
-        //fold
-        // self.header.iter().chain().collect()
-        let body: Vec<u8> = self
-            .chunks
-            .iter()
-            .flat_map(|chunk| chunk.as_bytes())
-            .collect();
-        self.header.iter().chain(body.iter()).copied().collect()
+        let body = self.chunks.iter().flat_map(|chunk| chunk.as_bytes());
+        self.header.into_iter().chain(body).collect()
     }
 }
 
@@ -73,20 +59,9 @@ impl TryFrom<&[u8]> for Png {
         }
         let mut chunks = vec![];
 
-        let mut buf = [0u8; 4];
-
         while !reader.fill_buf()?.is_empty() {
-            reader.read_exact(&mut buf)?;
-            let len = u32::from_be_bytes(buf);
-
-            reader.read_exact(&mut buf)?;
-            let chunk_type = ChunkType::try_from(buf)?;
-
-            let mut data_buf = vec![0; len as usize];
-            reader.read_exact(&mut data_buf)?;
-
-            chunks.push(Chunk::new(chunk_type, data_buf));
-            reader.read_exact(&mut buf)?;
+            let chunk = Chunk::read_chunk(&mut reader)?;
+            chunks.push(chunk);
         }
 
         Ok(Png::from_chunks(chunks))
