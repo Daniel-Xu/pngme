@@ -5,7 +5,7 @@ use std::fmt::{Display, Formatter};
 use std::io::{BufRead, BufReader, Read};
 use std::str::FromStr;
 
-struct Png {
+pub struct Png {
     header: [u8; 8],
     chunks: Vec<Chunk>,
 }
@@ -19,28 +19,28 @@ impl Png {
             chunks,
         }
     }
-    fn append_chunk(&mut self, chunk: Chunk) {
+    pub fn append_chunk(&mut self, chunk: Chunk) {
         self.chunks.push(chunk)
     }
-    fn remove_chunk(&mut self, chunk_type: &str) -> anyhow::Result<Chunk> {
+    pub fn remove_chunk(&mut self, chunk_type: &str) -> anyhow::Result<Chunk> {
         self.chunks()
             .iter()
             .position(|chunk| chunk.chunk_type().to_string() == chunk_type)
             .map(|index| self.chunks.remove(index))
             .ok_or_else(|| anyhow!("no such chunk of this type {}", chunk_type))
     }
-    fn header(&self) -> &[u8; 8] {
+    pub fn header(&self) -> &[u8; 8] {
         &self.header
     }
-    fn chunks(&self) -> &[Chunk] {
+    pub fn chunks(&self) -> &[Chunk] {
         &self.chunks
     }
-    fn chunk_by_type(&self, chunk_type: &str) -> Option<&Chunk> {
+    pub fn chunk_by_type(&self, chunk_type: &str) -> Option<&Chunk> {
         self.chunks()
             .iter()
             .find(|chunk| chunk.chunk_type().to_string() == chunk_type)
     }
-    fn as_bytes(&self) -> Vec<u8> {
+    pub fn as_bytes(&self) -> Vec<u8> {
         let body = self.chunks.iter().flat_map(|chunk| chunk.as_bytes());
         self.header.into_iter().chain(body).collect()
     }

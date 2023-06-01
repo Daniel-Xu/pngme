@@ -10,28 +10,22 @@ use clap::Parser;
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
+    println!("{:?}", cli.command);
+
     match cli.command {
-        Commands::encode {
-            file,
-            chunk_type,
-            content,
-        } => {
-            println!("encode {file} {chunk_type} {content}");
-            commands::encode(file, chunk_type, content);
+        Commands::Encode(args) => {
+            commands::encode(args)?;
         }
 
-        Commands::decode { file, chunk_type } => {
-            println!("decode {file} {chunk_type}");
-            commands::decode(file, chunk_type);
+        Commands::Decode(args) => {
+            commands::decode(args)?;
         }
 
-        Commands::remove { file, chunk_type } => {
-            println!("remove {file} {chunk_type}");
-            commands::remove(file, chunk_type);
+        Commands::Remove(args) => {
+            commands::remove(args)?;
         }
-        Commands::print { file } => {
-            println!("print {:?}", file);
-            commands::print(file);
+        Commands::Print(args) => {
+            commands::print(args)?;
         }
     }
     Ok(())

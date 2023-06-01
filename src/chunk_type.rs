@@ -1,8 +1,9 @@
 use anyhow::bail;
 use std::fmt::{Display, Formatter};
+use std::ops::Deref;
 use std::str::FromStr;
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct ChunkType {
     bytes: [u8; 4],
 }
