@@ -27,7 +27,7 @@ impl Chunk {
             .copied()
             .collect();
 
-        return CASTAGNOLI.checksum(&bytes);
+        CASTAGNOLI.checksum(&bytes)
     }
 
     // data here is the real content

@@ -4,7 +4,6 @@ use crate::chunk::Chunk;
 use crate::png::Png;
 use std::fs;
 
-
 pub fn encode(args: EncodeArgs) -> anyhow::Result<()> {
     let file = fs::read(&args.file)?;
 
@@ -15,7 +14,7 @@ pub fn encode(args: EncodeArgs) -> anyhow::Result<()> {
 
     fs::write(&args.file, png.as_bytes())?;
 
-    println!("after encoding {}", png);
+    println!("after encoding {png}");
 
     Ok(())
 }
@@ -51,7 +50,7 @@ pub fn print(args: PrintArgs) -> anyhow::Result<()> {
         println!("chunk type is: {}", chunk.chunk_type());
 
         if let Ok(data) = chunk.data_as_string() {
-            println!("chunk data is: {}", data);
+            println!("chunk data is: {data}");
         } else {
             println!("chunk data is: {:?}", chunk.as_bytes());
         }
