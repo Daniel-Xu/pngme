@@ -3,6 +3,7 @@ use anyhow::bail;
 use crc::{Crc, CRC_32_ISO_HDLC};
 use std::fmt::{Display, Formatter};
 use std::io::{BufRead, BufReader, Read};
+#[allow(dead_code)]
 
 // length: the data length (only the content data)
 // chuck_type 4

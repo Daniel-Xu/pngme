@@ -1,9 +1,9 @@
 use crate::args::{DecodeArgs, EncodeArgs, PrintArgs, RemoveArgs};
 use crate::chunk::Chunk;
-use crate::chunk_type::ChunkType;
+
 use crate::png::Png;
 use std::fs;
-use std::str::FromStr;
+
 
 pub fn encode(args: EncodeArgs) -> anyhow::Result<()> {
     let file = fs::read(&args.file)?;

@@ -1,6 +1,8 @@
+#![allow(dead_code)]
+
 use anyhow::bail;
 use std::fmt::{Display, Formatter};
-use std::ops::Deref;
+
 use std::str::FromStr;
 
 #[derive(PartialEq, Debug, Clone)]

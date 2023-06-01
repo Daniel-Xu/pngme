@@ -1,9 +1,9 @@
+#![allow(dead_code)]
 use crate::chunk::Chunk;
-use crate::chunk_type::ChunkType;
+
 use anyhow::{anyhow, bail};
 use std::fmt::{Display, Formatter};
 use std::io::{BufRead, BufReader, Read};
-use std::str::FromStr;
 
 pub struct Png {
     header: [u8; 8],
